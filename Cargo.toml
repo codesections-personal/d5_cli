@@ -1,0 +1,17 @@
+[package]
+name = "d5_cli"
+version = "0.1.0"
+authors = ["Daniel Sockwell <daniel@codesections.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { git = "https://github.com/clap-rs/clap" }
+reqwest = {version = "0.10.1", default-features = false, features = ["rustls-tls", "blocking"]}
+utils = {path = "../utils"}
+dirs = "2.0.2"
+run_script = "0.6.0"
+
+[profile.release]
+lto = true
