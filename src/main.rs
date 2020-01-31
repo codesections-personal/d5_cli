@@ -10,25 +10,36 @@ fn main() {
             r"Fetch an IP address from the d5 server at d5.codesections.com, or from the local cache.
 If no password is supplied, get a password via dmenu.",
         )
-        .arg(Arg::from("-u --username [USERNAME] 'Username to use with d5'").default_value("dsock"))
-        .arg("-p --pass [PASSWORD] 'Password to use with d5'")
+        .arg(Arg::from("-u --username [USERNAME] 'Username to use with d5'")
+             .takes_value(true))
+        .arg(Arg::from("-p --pass [PASSWORD] 'Password to use with d5'")
+             .takes_value(true))
         .arg("-f --force 'Ignore the local cache and update the IP address from d5'")
+        .arg(Arg::from("--src 'Prints this program's source to stdout'"))
         .get_matches();
     run(cli).unwrap_or_die();
 }
 
 fn run(cli: ArgMatches) -> Result<(), Box<dyn Error>> {
-    let username = cli.value_of("username").expect("default");
-    let password = cli.value_of("pass");
-    let d5 = D5::new().with_user(username).with_password(password);
-
+    if cli.is_present("src") {
+        print!(
+            "/// main.rs\n{main}\n\n/// lib.rs\n{lib}",
+            main = include_str!("main.rs"),
+            lib = include_str!("lib.rs")
+        );
+        return Ok(());
+    }
+    let mut d5 = D5::new();
+    if let Some(username) = cli.value_of("username") {
+        d5.username = username;
+    }
+    if let Some(password) = cli.value_of("pass") {
+        d5.password = Some(password)
+    }
     let ip = if cli.is_present("force") {
         d5.try_ip_from_server()?
     } else {
-        match d5.try_ip_from_cache() {
-            Ok(ip) => ip,
-            Err(_) => d5.try_ip_from_server()?,
-        }
+        d5.try_ip()?
     };
 
     print!("{}", ip.to_string());
